@@ -1,0 +1,19 @@
+name: CD - Delivery Pipeline
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/deploy.sh staging
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/deploy.sh production
