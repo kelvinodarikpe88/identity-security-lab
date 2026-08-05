@@ -1,23 +1,17 @@
 rule okta_impossible_travel {
+
   meta:
-    author = "Kelvin Odarikpe"
-    description = "Successful login from 2+ far-apart geo locations within 1h"
-    severity = "HIGH"
-    mitre_attack_technique = "T1078"
+    author = "Security Engineering"
+    description = "Starter detection for suspicious geographically inconsistent Okta authentication activity"
+    severity = "MEDIUM"
+
   events:
     $login.metadata.event_type = "USER_LOGIN"
-    $login.metadata.product_name = "Okta"
-    $login.security_result.action = "ALLOW"
     $login.principal.user.userid = $user
-    $login.principal.location.country_or_region = $country1
-    $login2.metadata.event_type = "USER_LOGIN"
-    $login2.metadata.product_name = "Okta"
-    $login2.security_result.action = "ALLOW"
-    $login2.principal.user.userid = $user
-    $login2.principal.location.country_or_region = $country2
-    $country1 != $country2
+
   match:
     $user over 1h
+
   condition:
-    $login and $login2
+    #login > 1
 }
