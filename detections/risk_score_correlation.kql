@@ -1,0 +1,11 @@
+// METADATA-START
+// id: SOC-DET-011 | mitre: T1078 | nist: DE.CM-1, DE.CM-7 | iso27001: A.8.16
+// soc2: CC7.2 | severity: high | data_source: Entra ID + Defender for Identity
+// METADATA-END
+let risky_users = RiskyUsers | where RiskLevel == "high" | project UserPrincipalName, RiskLevel, RiskLastUpdatedDateTime;
+SigninLogs
+| where TimeGenerated > ago(24h)
+| join kind=inner risky_users on UserPrincipalName
+| join kind=leftouter (IdentityLogonEvents | project AccountUpn, ActionType, SourceIPAddress) on $left.UserPrincipalName == $right.AccountUpn
+| project TimeGenerated, UserPrincipalName, IPAddress, City, RiskLevel, ActionType
+| where IPAddress != "127.0.0.1"

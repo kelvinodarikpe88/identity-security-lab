@@ -1,0 +1,24 @@
+name: Compliance Evidence
+on:
+  schedule: [{cron: '0 2 * * *'}]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: mkdir -p evidence && python3 -m pytest tests/ --junitxml=evidence/tests.xml || true
+      - run: |
+          if [ -f docs/ttp-matrix.md ]; then
+            python3 scripts/generate_ttp_report.py --matrix docs/ttp-matrix.md --out evidence/coverage.json
+          else echo '{"ttps_covered":[]}' > evidence/coverage.json; fi
+      - uses: actions/upload-artifact@v4
+        with: {name: evidence-bundle, path: evidence/}
+      - run: |
+          git config user.name "soc-bot"
+          git config user.email "soc-bot@users.noreply.github.com"
+          git add evidence/
+          git commit -m "chore: nightly evidence bundle [skip ci]" || true
+          git push

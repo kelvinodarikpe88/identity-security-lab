@@ -1,0 +1,73 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "playbookName": { "type": "string", "defaultValue": "la-account-compromise" },
+    "sentinelConnectionId": { "type": "string" }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/connections",
+      "apiVersion": "2016-06-01",
+      "name": "azuread-connection",
+      "location": "[resourceGroup().location]",
+      "properties": { "api": { "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/azuread')]" }, "parameterValues": {} }
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2019-05-01",
+      "name": "[parameters('playbookName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": ["[resourceId('Microsoft.Web/connections', 'azuread-connection')]"],
+      "identity": { "type": "SystemAssigned" },
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "triggers": {
+            "Sentinel_Incident": {
+              "type": "ApiConnectionWebhook",
+              "inputs": { "body": { "schema": { "type": "object" } }, "host": { "connection": { "name": "@parameters('$connections')['sentinel']['connectionId']" } }, "path": "/trigger" }
+            }
+          },
+          "actions": {
+            "HTTP_Disable_User": {
+              "type": "Http",
+              "inputs": {
+                "method": "PATCH",
+                "uri": "@concat('https://graph.microsoft.com/v1.0/users/', triggerBody()?['properties']?['title'])",
+                "headers": { "Authorization": "@concat('Bearer ', workflowContext().accessToken)", "Content-Type": "application/json" },
+                "body": { "accountEnabled": false }
+              }
+            },
+            "HTTP_Revoke_Sessions": {
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "@concat('https://graph.microsoft.com/v1.0/users/', triggerBody()?['properties']?['title'], '/revokeSignInSessions')",
+                "headers": { "Authorization": "@concat('Bearer ', workflowContext().accessToken)" }
+              }
+            },
+            "HTTP_Add_Comment": {
+              "type": "Http",
+              "inputs": {
+                "method": "PUT",
+                "uri": "@concat('https://management.azure.com', triggerBody()?['properties']?['incidentUrl'], '?api-version=2023-02-01')",
+                "headers": { "Authorization": "@concat('Bearer ', workflowContext().accessToken)" },
+                "body": { "properties": { "comment": "Auto: user disabled + sessions revoked by playbook" } }
+              }
+            }
+          }
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "sentinel": { "connectionId": "[parameters('sentinelConnectionId')]", "connectionName": "sentinel", "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/sentinel')]" },
+              "azuread": { "connectionId": "[resourceId('Microsoft.Web/connections', 'azuread-connection')]", "connectionName": "azuread", "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/azuread')]" }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": { "playbookId": { "type": "string", "value": "[resourceId('Microsoft.Logic/workflows', parameters('playbookName'))]" } }
+}
