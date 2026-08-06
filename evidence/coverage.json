@@ -1,0 +1,110 @@
+{
+  "generated": "2026-08-06T05:11:15.451715",
+  "total_rules": 12,
+  "ttps_covered": [
+    "T1021.001",
+    "T1059.001",
+    "T1070",
+    "T1078",
+    "T1078.004",
+    "T1098",
+    "T1190",
+    "T1210",
+    "T1486",
+    "T1530",
+    "T1562.001",
+    "T1567.002"
+  ],
+  "severity_counts": {
+    "critical": 3,
+    "high": 7,
+    "medium": 2,
+    "low": 0
+  },
+  "rules": [
+    {
+      "ttp": "T1078.004",
+      "technique": "Valid Accounts: Cloud",
+      "rule": "gcp_iam_abuse.yaral, azure_admin_activity.kql",
+      "data_source": "Cloud audit logs",
+      "severity": "High"
+    },
+    {
+      "ttp": "T1078",
+      "technique": "Valid Accounts (stolen creds)",
+      "rule": "okta_impossible_travel.yaral, defender-identity.kql",
+      "data_source": "Okta / Entra ID",
+      "severity": "High"
+    },
+    {
+      "ttp": "T1567.002",
+      "technique": "Exfil Over Web Service",
+      "rule": "sharepoint_bulk_download.kql",
+      "data_source": "SharePoint audit",
+      "severity": "Critical"
+    },
+    {
+      "ttp": "T1530",
+      "technique": "Data from Cloud Storage",
+      "rule": "s3_public_access.kql, sharepoint_external_sharing.kql",
+      "data_source": "CloudTrail / Purview",
+      "severity": "High"
+    },
+    {
+      "ttp": "T1486",
+      "technique": "Data Encrypted for Impact",
+      "rule": "guardduty_crypto.kql",
+      "data_source": "GuardDuty",
+      "severity": "Critical"
+    },
+    {
+      "ttp": "T1059.001",
+      "technique": "PowerShell",
+      "rule": "endpoint-hunting.kql",
+      "data_source": "Defender for Endpoint",
+      "severity": "High"
+    },
+    {
+      "ttp": "T1190",
+      "technique": "Exploit Public-Facing App",
+      "rule": "WAF 403/401 anomaly + wap_bruteforce.kql",
+      "data_source": "WAF",
+      "severity": "High"
+    },
+    {
+      "ttp": "T1098",
+      "technique": "Account Manipulation",
+      "rule": "Entra AuditLogs query (Add member to role, Update user)",
+      "data_source": "Entra ID",
+      "severity": "High"
+    },
+    {
+      "ttp": "T1562.001",
+      "technique": "Impair Defenses",
+      "rule": "DeviceEvents where ActionType == TamperProtectionDisable",
+      "data_source": "MDE",
+      "severity": "Critical"
+    },
+    {
+      "ttp": "T1021.001",
+      "technique": "RDP/SSH Remote Services",
+      "rule": "nsg_bruteforce.kql",
+      "data_source": "NSG flow logs",
+      "severity": "Medium"
+    },
+    {
+      "ttp": "T1210",
+      "technique": "Exploitation of Remote Services",
+      "rule": "known_exploited.kql",
+      "data_source": "Nessus + CISA KEV",
+      "severity": "High"
+    },
+    {
+      "ttp": "T1070",
+      "technique": "Indicator Removal",
+      "rule": "Sysmon ID 23/26, DeviceFileEvents deletion bursts",
+      "data_source": "Endpoint",
+      "severity": "Medium"
+    }
+  ]
+}
